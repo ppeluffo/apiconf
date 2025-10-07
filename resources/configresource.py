@@ -28,8 +28,9 @@ class ConfigResource(Resource):
         unit_id = args['unit']
 
         d_rsp = self.config_service.get_config(unit_id)
-
-        return d_rsp, 200
+        status_code = d_rsp.pop('status_code', 500)
+        return d_rsp, status_code
+    
         
     def post(self):
         """
@@ -47,7 +48,8 @@ class ConfigResource(Resource):
         d_config = request.get_json()
 
         d_rsp = self.config_service.set_config(unit_id, d_config)
-
-        return d_rsp, 200
+        status_code = d_rsp.pop('status_code', 500)
+        return d_rsp, status_code
+    
     
 

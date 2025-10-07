@@ -16,10 +16,10 @@ class ConfigService:
         
         d_rsp = self.repo.get_config(unit_id)
     
-        if d_rsp.get('rsp','ERR') == 'OK':
+        if d_rsp.get('status_code',0) == 200:
             # La BD devuelve una tupla !!
             jconfig = d_rsp['jconfig_raw'][0]
-            d_rsp = { 'rsp':'OK', 'jconfig': jconfig}
+            d_rsp = { 'status_code':200, 'jconfig': jconfig}
 
         return d_rsp
     

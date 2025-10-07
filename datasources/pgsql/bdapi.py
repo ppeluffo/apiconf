@@ -5,6 +5,9 @@ El campo 'rsp' SIEMPRE ESTA PRESENTE y puede estar en 'OK' o en 'ERR'.
 """
 from .models import Usuarios, Configuraciones, Online, RecoverId
 from sqlalchemy import text
+from sqlalchemy import cast
+from sqlalchemy.dialects.postgresql import JSONB
+
 from config import settings
 
 class ApiBdPgsql:
@@ -12,7 +15,7 @@ class ApiBdPgsql:
     def __init__(self, session_factory, logger):
         self.session_factory = session_factory
         self.logger = logger
-        
+
     def ping(self):
         """
         Si el server responde, el ping da True.
@@ -23,13 +26,13 @@ class ApiBdPgsql:
         try:
             with self.session_factory() as session:
                 session.execute(text("SELECT 1"))
-                d_rsp = {'rsp':'OK',
+                d_rsp = {'status_code': 200,
                          'version': settings.API_VERSION,
                          "SQL_HOST": settings.PGSQL_HOST,
                          "SQL_PORT": settings.PGSQL_PORT }
         except Exception as e:
-            self.logger.error(f"{e}")
-            d_rsp = { 'rsp': 'ERR', 'msg': e}
+            self.logger.error(f"PgSQL {e}")
+            d_rsp = {'status_code': 502,  'msg':f"{e}" }
 
         return d_rsp
 
@@ -43,14 +46,54 @@ class ApiBdPgsql:
             with self.session_factory() as session:
                 #unidades_raw = session.query(Configuraciones.unit_id).limit(10).all()
                 unidades_raw = session.query(Configuraciones.unit_id).all()
-                d_rsp = {'rsp':'OK', 'unidades_raw': unidades_raw }
+                d_rsp = {'status_code': 200, 'unidades_raw': unidades_raw }
 
         except Exception as e:
-            self.logger.error(f"{e}")
-            d_rsp = { 'rsp': 'ERR', 'msg': e}
+            self.logger.error(f"PgSQL {e}")
+            d_rsp = {'status_code': 502,  'msg':f"{e}" }
+
+        return d_rsp
+    
+    def get_only_plc(self):
+        """
+        Lee toda la tabla de configuraciones y la devuelve solo la lista de PLC.
+        """
+        self.logger.debug("")
+
+        try:
+            with self.session_factory() as session:
+                plcs_raw = session.query(Configuraciones.unit_id).where(cast(Configuraciones.jconfig, JSONB).has_key("MEMBLOCK")).all()
+                if len(plcs_raw) == 0:
+                    d_rsp = {'status_code': 204, 'plcs_raw': plcs_raw }
+                else:
+                    d_rsp = {'status_code': 200, 'plcs_raw': plcs_raw }
+
+        except Exception as e:
+            self.logger.error(f"PgSQL {e}")
+            d_rsp = {'status_code': 502,  'msg':f"{e}" }
 
         return d_rsp
 
+    def get_only_dlgs(self):
+        """
+        Lee toda la tabla de configuraciones y la devuelve solo la lista de DLG.
+        """
+        self.logger.debug("")
+
+        try:
+            with self.session_factory() as session:
+                dlgs_raw = session.query(Configuraciones.unit_id).where(cast(Configuraciones.jconfig, JSONB).has_key("BASE")).all()
+                if len(dlgs_raw) == 0:
+                    d_rsp = {'status_code': 204, 'dlgs_raw': dlgs_raw }
+                else:
+                    d_rsp = {'status_code': 200, 'dlgs_raw': dlgs_raw }
+
+        except Exception as e:
+            self.logger.error(f"PgSQL {e}")
+            d_rsp = {'status_code': 502,  'msg':f"{e}" }
+
+        return d_rsp
+    
     def get_config(self, unit_id=None):
         """
         Retorna la configuracion de la unidad 
@@ -60,7 +103,10 @@ class ApiBdPgsql:
         try:
             with self.session_factory() as session:
                 jconfig_raw = session.query(Configuraciones.jconfig).filter(Configuraciones.unit_id == unit_id).first()
-                d_rsp = {'rsp':'OK', 'jconfig_raw': jconfig_raw }
+                if jconfig_raw is None:
+                    d_rsp = {'status_code': 204, 'jconfig_raw': jconfig_raw }
+                else:
+                    d_rsp = {'status_code': 200, 'jconfig_raw': jconfig_raw }
 
         except Exception as e:
             self.logger.error(f"{e}")
@@ -79,7 +125,7 @@ class ApiBdPgsql:
                 recd = session.query(Configuraciones).filter(Configuraciones.unit_id == unit_id).first()
                 recd.jconfig = jd_config
                 session.commit()
-                d_rsp = {'rsp':'OK' }
+                d_rsp = {'status_code': 200 }
 
         except Exception as e:
             self.logger.error(f"{e}")
@@ -96,11 +142,14 @@ class ApiBdPgsql:
         try:
             with self.session_factory() as session:
                 recoverid_rcd = session.query(RecoverId).filter(RecoverId.uid == uid).first()
-                d_rsp = {'rsp':'OK', 'recoverid_rcd': recoverid_rcd }
+                if recoverid_rcd is None:
+                    d_rsp = {'status_code': 204, 'recoverid_rcd': recoverid_rcd }
+                else:    
+                    d_rsp = {'status_code': 200, 'recoverid_rcd': recoverid_rcd }
 
         except Exception as e:
-            self.logger.error(f"{e}")
-            d_rsp = { 'rsp': 'ERR', 'msg': e}
+            self.logger.error(f"PgSQL {e}")
+            d_rsp = {'status_code': 502,  'msg':f"{e}" }
 
         return d_rsp          
 
@@ -115,11 +164,11 @@ class ApiBdPgsql:
             with self.session_factory() as session:
                 session.query(RecoverId).filter(RecoverId.uid == uid).delete(synchronize_session=False)
                 session.commit()
-                d_rsp = {'rsp':'OK'}
+                d_rsp = {'status_code': 200, 'uid':uid }
 
         except Exception as e:
-            self.logger.error(f"{e}")
-            d_rsp = { 'rsp': 'ERR', 'msg': e}
+            self.logger.error(f"PgSQL {e}")
+            d_rsp = {'status_code': 502,  'msg':f"{e}" }
 
         return d_rsp  
 
@@ -134,11 +183,11 @@ class ApiBdPgsql:
             with self.session_factory() as session:
                 session.query(RecoverId).filter(RecoverId.id == id).delete(synchronize_session=False)
                 session.commit()
-                d_rsp = {'rsp':'OK'}
+                d_rsp = {'status_code': 200}
                 
         except Exception as e:
-            self.logger.error(f"{e}")
-            d_rsp = { 'rsp': 'ERR', 'msg': e}
+            self.logger.error(f"PgSQL {e}")
+            d_rsp = {'status_code': 502,  'msg':f"{e}" }
 
         return d_rsp 
 
@@ -153,11 +202,11 @@ class ApiBdPgsql:
                 new_rcd = RecoverId(uid=uid, id=id)
                 _ = session.add(new_rcd)
                 session.commit()
-                d_rsp = {'rsp':'OK'}
+                d_rsp = {'status_code': 200, 'uid':uid, 'id':id}
 
         except Exception as e:
-            self.logger.error(f"{e}")
-            d_rsp = { 'rsp': 'ERR', 'msg': e}
+            self.logger.error(f"PgSQL {e}")
+            d_rsp = {'status_code': 502,  'msg':f"{e}" }
 
         return d_rsp       
 

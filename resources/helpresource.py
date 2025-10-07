@@ -16,11 +16,10 @@ class HelpResource(Resource):
         self.logger.debug("")
         
         d_options = {
-            'GET /apiconf/versiones':'Retorna una lista con todas las versiones que se manejan',
-            'GET /apiconf/template':'Retorna el template de la version indicada',
             'GET /apiconf/config':' Retorna la configuracion de la unidad solicitada',
             'POST /apiconf/config':'Crea/Actualiza la configuracion de la unidad indicada',
             'GET /apiconf/unidades':' Retorna una lista con todas las unidades configuradas',
-            'POST /apiconf/commsidparams':'Actualiza la configuracion de comunicaciones de la unidad indicada',
+            'GET /apiconf/uid2id':'Lee un id que corresponde al uid pasado como parametro',
+            'PUT /apiconf/uid2id':'Actualiza la configuracion de comunicaciones de la unidad indicada',
         }
-        return {'rsp': 'OK', 'd_options': d_options} , 200
+        return {'d_options': d_options} , 200

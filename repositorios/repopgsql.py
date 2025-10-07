@@ -22,6 +22,20 @@ class RepoPgsql:
         
         return self.datasource.get_all_unidades()
         
+    def get_only_plc(self):
+        """
+        """
+        self.logger.debug("")
+        
+        return self.datasource.get_only_plc()
+    
+    def get_only_dlgs(self):
+        """
+        """
+        self.logger.debug("")
+        
+        return self.datasource.get_only_dlgs()
+    
     def get_config(self, unit_id=None):
         """
         """

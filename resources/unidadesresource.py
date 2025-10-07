@@ -19,9 +19,11 @@ class UnidadesResource(Resource):
         self.logger.debug("")
 
         d_rsp = self.unidades_service.get_all_unidades()
+        status_code = d_rsp.pop('status_code', 500)
 
-        if d_rsp.get('rsp','ERR') == 'OK':
-            return d_rsp,200
-        else:
-            return d_rsp, 500
+        # No mando detalles de los errores en respuestas x seguridad.
+        if status_code == 502:
+            _ = d_rsp.pop('msg', '')
+            d_rsp['msg'] = "SERVICIO NO DISPONIBLE TEMPORALMENTE"
+        return d_rsp, status_code
 

@@ -27,8 +27,14 @@ class Uid2idResource(Resource):
         uid = args['uid']
         
         d_rsp = self.uid2id_service.recover_id_from_uid(uid)
+        status_code = d_rsp.pop('status_code', 500)
 
-        return d_rsp, 200
+        # No mando detalles de los errores en respuestas x seguridad.
+        if status_code == 502:
+            _ = d_rsp.pop('msg', '')
+            d_rsp['msg'] = "SERVICIO NO DISPONIBLE TEMPORALMENTE"
+        return d_rsp, status_code
+
         
     def put(self):
         """
@@ -45,7 +51,13 @@ class Uid2idResource(Resource):
         id = args['id']
         
         d_rsp = self.uid2id_service.set_id_and_uid(id, uid)
-
-        return d_rsp, 200
+        status_code = d_rsp.pop('status_code', 500)
+        
+        # No mando detalles de los errores en respuestas x seguridad.
+        if status_code == 502:
+            _ = d_rsp.pop('msg', '')
+            d_rsp['msg'] = "SERVICIO NO DISPONIBLE TEMPORALMENTE"
+        return d_rsp, status_code
+    
 
  

@@ -1,6 +1,7 @@
 #!/home/pablo/Spymovil/python/proyectos/API_SPYAPP/.venv/bin/python3
 
 from sqlalchemy import Column, Integer, String, DateTime, JSON, Double
+from sqlalchemy.dialects.postgresql import JSONB
 from datetime import datetime
 import pytz # For creating timezone-aware datetime objects
 from sqlalchemy.ext.declarative import declarative_base
@@ -38,7 +39,7 @@ class Configuraciones(Base_local):
     pk = Column( Integer(), primary_key=True, autoincrement=True)
     unit_id = Column(String(20), nullable=True, default='NONE')
     uid = Column(String(50), nullable=True, default='')
-    jconfig = Column( JSON())
+    jconfig = Column( JSON() )
 
     def __init__(self, unit_id, uid='', jconfig=''):
         self.unit_id = unit_id
